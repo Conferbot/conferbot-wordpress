@@ -99,7 +99,7 @@ class Conferbot_Admin
 </style>
 <div class="wrap">
 <div class="cb-panel">
-  <h1>💬 <?php esc_html_e('Conferbot Live Chat', 'conferbot'); ?></h1>
+  <h1><img src="<?php echo esc_url(CONFERBOT_PLUGIN_URL . 'assets/logo.png'); ?>" alt="Conferbot" style="width:44px;height:44px"> <?php esc_html_e('Conferbot Live Chat', 'conferbot'); ?></h1>
   <p class="cb-sub"><?php esc_html_e('Add a chat assistant to your site in under a minute. Only one thing to paste!', 'conferbot'); ?></p>
 
   <?php if ($error === 'no_id_found') : ?>
