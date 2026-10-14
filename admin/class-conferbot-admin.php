@@ -34,6 +34,8 @@ class Conferbot_Admin
                 'bot_id' => $pasted,
                 'embed_type' => isset($_POST['embed_type']) ? sanitize_text_field(wp_unslash($_POST['embed_type'])) : 'live_chat',
                 'script_url' => isset($_POST['script_url']) ? esc_url_raw(wp_unslash($_POST['script_url'])) : '',
+                'identity_secret' => isset($_POST['identity_secret']) ? sanitize_text_field(wp_unslash($_POST['identity_secret'])) : '',
+                'identity_secret_clear' => !empty($_POST['identity_secret_clear']),
                 'show_on_home' => !empty($_POST['show_on_home']),
                 'show_on_posts' => !empty($_POST['show_on_posts']),
                 'show_on_pages' => !empty($_POST['show_on_pages']),
@@ -169,6 +171,12 @@ class Conferbot_Admin
           <label><input type="checkbox" name="show_on_<?php echo esc_attr($key); ?>" value="1" <?php checked(!empty($s['show_on_' . $key])); ?>> <?php echo esc_html($label); ?></label>
         <?php endforeach; ?>
       </div>
+      <p><strong><?php esc_html_e('Identity verification secret', 'conferbot'); ?></strong> <span class="cb-step-help"><?php esc_html_e('(optional - from Conferbot workspace settings > Security > Identity verification; lets Conferbot trust your logged-in customers\' names and emails)', 'conferbot'); ?></span></p>
+      <input class="cb-input" style="font-size:14px;padding:10px 12px" type="password" name="identity_secret" autocomplete="new-password"
+        placeholder="<?php echo esc_attr(!empty($s['identity_secret']) ? __('Saved - paste a new one to replace it', 'conferbot') : __('Paste your secret', 'conferbot')); ?>" value="">
+      <?php if (!empty($s['identity_secret'])) : ?>
+        <label class="cb-step-help"><input type="checkbox" name="identity_secret_clear" value="1"> <?php esc_html_e('Remove the saved secret', 'conferbot'); ?></label>
+      <?php endif; ?>
       <p><strong><?php esc_html_e('Widget script URL', 'conferbot'); ?></strong> <span class="cb-step-help"><?php esc_html_e('(leave as is unless Conferbot support says otherwise)', 'conferbot'); ?></span></p>
       <input class="cb-input" style="font-size:14px;padding:10px 12px" type="text" name="script_url" value="<?php echo esc_attr($s['script_url']); ?>">
     </details>
