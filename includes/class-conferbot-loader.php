@@ -13,12 +13,13 @@ class Conferbot_Loader
     /**
      * Pure renderer: settings + prebuilt options -> HTML string.
      */
-    public static function render(array $settings, array $options)
+    public static function render(array $settings, array $options, array $events = array())
     {
         $script_url = esc_url($settings['script_url']);
         $bot_id = esc_js($settings['bot_id']);
         $embed_type = esc_js($settings['embed_type']);
         $json = Conferbot_Context::to_json($options);
+        $tracks = self::track_calls($events);
 
         return <<<HTML
 <!-- Conferbot Live Chat -->
@@ -33,12 +34,68 @@ class Conferbot_Loader
     js.charset = 'UTF-8';
     if (el && el.parentNode) { el.parentNode.insertBefore(js, el); } else { d.head.appendChild(js); }
     js.onload = function () {
-      window.ConferbotWidget('{$bot_id}', '{$embed_type}', {$json});
+      window.ConferbotWidget('{$bot_id}', '{$embed_type}', {$json});{$tracks}
     };
   })(document, 'script', 'conferbot-js');
 </script>
 
 HTML;
+    }
+
+    /**
+     * What the visitor did, for Conferbot's "chats that led to a sale":
+     * the order on the thank-you page (once per order), and every AJAX
+     * add-to-cart in WooCommerce, which also keeps the cart total current.
+     */
+    public static function track_calls(array $events)
+    {
+        $out = '';
+        foreach ($events as $event) {
+            if (empty($event['name'])) {
+                continue;
+            }
+            $name = self::js((string) $event['name']);
+            $props = self::js((object) (isset($event['props']) && is_array($event['props']) ? $event['props'] : array()));
+            if (!empty($event['once'])) {
+                $key = self::js('cb-track-' . (string) $event['once']);
+                $out .= "\n      try { if (!sessionStorage.getItem({$key})) { sessionStorage.setItem({$key}, '1'); window.ConferbotWidget.track({$name}, {$props}); } } catch (e) { window.ConferbotWidget.track({$name}, {$props}); }";
+            } else {
+                $out .= "\n      window.ConferbotWidget.track({$name}, {$props});";
+            }
+        }
+        if (!empty($events) || function_exists('WC')) {
+            $out .= "\n      if (window.jQuery) { window.jQuery(document.body).on('added_to_cart', function () { window.ConferbotWidget.track('add_to_cart'); }); }";
+        }
+        return $out;
+    }
+
+    /** A value as script-safe JSON (strings and objects alike). */
+    private static function js($value)
+    {
+        return json_encode($value, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+    }
+
+    /**
+     * The order a WooCommerce thank-you page shows, as a purchase event.
+     */
+    public static function gather_events()
+    {
+        $events = array();
+        if (function_exists('is_order_received_page') && is_order_received_page() && function_exists('wc_get_order')) {
+            $order = wc_get_order(absint(get_query_var('order-received')));
+            if ($order) {
+                $events[] = array(
+                    'name' => 'purchase',
+                    'props' => array(
+                        'value' => (float) $order->get_total(),
+                        'currency' => (string) $order->get_currency(),
+                        'order_id' => (string) $order->get_order_number(),
+                    ),
+                    'once' => 'order-' . $order->get_id(),
+                );
+            }
+        }
+        return $events;
     }
 
     /**
@@ -72,6 +129,7 @@ HTML;
             );
         }
 
-        return Conferbot_Context::build($site, CONFERBOT_VERSION, $user, $cart);
+        $settings = Conferbot_Settings::get();
+        return Conferbot_Context::build($site, CONFERBOT_VERSION, $user, $cart, $settings['identity_secret']);
     }
 }
