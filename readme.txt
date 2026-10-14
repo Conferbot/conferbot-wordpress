@@ -2,7 +2,7 @@
 Contributors: conferbot
 Tags: chatbot, live chat, ai chatbot, customer support, chat widget
 Requires at least: 5.8
-Tested up to: 6.5
+Tested up to: 7.1
 Requires PHP: 7.2
 Stable tag: 1.1.0
 License: GPLv2 or later
