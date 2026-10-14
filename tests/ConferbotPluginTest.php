@@ -184,4 +184,43 @@ class ConferbotPluginTest extends TestCase
         $this->assertStringContainsString("'conferbot-js'", $html);
         $this->assertStringContainsString('"platform":"wordpress"', $html);
     }
+
+    // ---- identity verification and tracking ----------------------------------------
+
+    public function testLoggedInUserIsSignedWithTheWorkspaceSecret()
+    {
+        $o = Conferbot_Context::build(array(), '1.0.0', array('id' => 7, 'name' => 'Jane', 'email' => 'jane@example.com'), null, 's3cret');
+        // What Conferbot checks: HMAC-SHA256(secret, user.id), hex.
+        $this->assertSame(hash_hmac('sha256', 'wp-7', 's3cret'), $o['user']['hash']);
+        $this->assertArrayNotHasKey('hash', Conferbot_Context::build(array(), '1.0.0', array('id' => 7), null, '')['user']);
+        $this->assertArrayNotHasKey('user', Conferbot_Context::build(array(), '1.0.0', null, null, 's3cret'));
+    }
+
+    public function testSecretIsWriteOnlyAndNeverRendered()
+    {
+        $kept = Conferbot_Settings::sanitize(array('bot_id' => self::ID, 'identity_secret' => '  '), array('identity_secret' => 'old'));
+        $this->assertSame('old', $kept['identity_secret']);
+        $new = Conferbot_Settings::sanitize(array('bot_id' => self::ID, 'identity_secret' => ' new '), array('identity_secret' => 'old'));
+        $this->assertSame('new', $new['identity_secret']);
+        $cleared = Conferbot_Settings::sanitize(array('bot_id' => self::ID, 'identity_secret_clear' => '1'), array('identity_secret' => 'old'));
+        $this->assertSame('', $cleared['identity_secret']);
+
+        $settings = array_merge(Conferbot_Settings::defaults(), array('bot_id' => self::ID, 'enabled' => true, 'identity_secret' => 'top-secret'));
+        $html = Conferbot_Loader::render($settings, Conferbot_Context::build(array(), '1.0.0', array('id' => 1), null, 'top-secret'));
+        $this->assertStringNotContainsString('top-secret', $html);
+    }
+
+    public function testPurchaseIsTrackedOncePerOrder()
+    {
+        $settings = array_merge(Conferbot_Settings::defaults(), array('bot_id' => self::ID, 'enabled' => true));
+        $html = Conferbot_Loader::render($settings, Conferbot_Context::build(array(), '1.0.0'), array(
+            array('name' => 'purchase', 'props' => array('value' => 49.5, 'currency' => 'GBP', 'order_id' => '1042'), 'once' => 'order-1042'),
+        ));
+        $this->assertStringContainsString('window.ConferbotWidget.track("purchase", {"value":49.5,"currency":"GBP","order_id":"1042"})', $html);
+        $this->assertStringContainsString('sessionStorage.getItem("cb-track-order-1042")', $html);
+        $this->assertStringContainsString("on('added_to_cart'", $html);
+        // No events, no Woo: nothing extra.
+        $plain = Conferbot_Loader::render($settings, Conferbot_Context::build(array(), '1.0.0'));
+        $this->assertStringNotContainsString('.track(', $plain);
+    }
 }
