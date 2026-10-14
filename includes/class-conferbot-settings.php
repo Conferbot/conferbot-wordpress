@@ -25,6 +25,7 @@ class Conferbot_Settings
             'bot_id' => '',
             'embed_type' => 'live_chat',
             'script_url' => self::DEFAULT_SCRIPT_URL,
+            'identity_secret' => '',
         );
         foreach (self::$page_types as $page) {
             $defaults['show_on_' . $page] = true;
@@ -42,7 +43,7 @@ class Conferbot_Settings
      * Sanitizes raw form input into a safe settings array. Pure so it is
      * unit-testable; persistence happens in save().
      */
-    public static function sanitize(array $input)
+    public static function sanitize(array $input, array $current = array())
     {
         $bot_id = Conferbot_Bot_Id::extract(isset($input['bot_id']) ? $input['bot_id'] : '');
 
@@ -61,6 +62,12 @@ class Conferbot_Settings
             'bot_id' => $bot_id,
             'embed_type' => $embed_type,
             'script_url' => $script_url,
+            // Write-only: a blank field keeps the saved secret, "remove" clears it.
+            'identity_secret' => !empty($input['identity_secret_clear'])
+                ? ''
+                : (isset($input['identity_secret']) && trim((string) $input['identity_secret']) !== ''
+                    ? trim((string) $input['identity_secret'])
+                    : (isset($current['identity_secret']) ? (string) $current['identity_secret'] : '')),
         );
         foreach (self::$page_types as $page) {
             $clean['show_on_' . $page] = !empty($input['show_on_' . $page]);
@@ -70,7 +77,7 @@ class Conferbot_Settings
 
     public static function save(array $input)
     {
-        $clean = self::sanitize($input);
+        $clean = self::sanitize($input, self::get());
         update_option(self::OPTION_KEY, $clean);
         return $clean;
     }
