@@ -72,7 +72,7 @@ docker run --rm -v "$PWD":/mod -v /path/to/phpunit-10.phar:/phpunit.phar:ro \
 
 Covered: bot ID extraction (bare/snippet/URL/garbage), settings sanitization (invalid embed types, `javascript:` script URLs, enable-without-ID refusal, the write-only identity secret), WooCommerce-aware page-type resolution with priority rules, per-page visibility, guest/user/cart context building, the identity hash, purchase tracking once per order, and script-injection safety of the inlined JSON.
 
-Verified end to end in a dockerized WordPress 6.5: activation, loader render with correct context, logged-in identity (`wp-1`), per-page gating on/off, and the real CDN widget mounting and chatting (see the video above).
+Verified end to end in a dockerized WordPress 7.1 with WooCommerce: activation, loader render with correct context, logged-in identity (`wp-1`), per-page gating on/off, and the real CDN widget mounting and chatting (see the video above).
 
 ## License
 
