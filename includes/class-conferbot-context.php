@@ -16,9 +16,10 @@ class Conferbot_Context
      * @param string $version plugin version
      * @param array|null $user keys: id, name, email (null = guest)
      * @param array|null $cart keys: total, item_count (null = no Woo/empty)
+     * @param string $secret the workspace's identity verification secret ('' = off)
      * @return array
      */
-    public static function build(array $site, $version, $user = null, $cart = null)
+    public static function build(array $site, $version, $user = null, $cart = null, $secret = '')
     {
         $options = array('customData' => array(
             'platform' => 'wordpress',
@@ -37,6 +38,11 @@ class Conferbot_Context
                 'name' => isset($user['name']) ? trim((string) $user['name']) : '',
                 'email' => isset($user['email']) ? (string) $user['email'] : '',
             );
+            // Identity verification: the id signed with the workspace secret,
+            // so Conferbot knows this is the site's own logged-in customer.
+            if ((string) $secret !== '') {
+                $options['user']['hash'] = self::user_hash($options['user']['id'], $secret);
+            }
         }
 
         if (is_array($cart)) {
@@ -49,6 +55,12 @@ class Conferbot_Context
         }
 
         return $options;
+    }
+
+    /** HMAC-SHA256 of the signed value (the user id) with the secret, hex - as Conferbot checks it. */
+    public static function user_hash($value, $secret)
+    {
+        return hash_hmac('sha256', (string) $value, (string) $secret);
     }
 
     /** JSON safe to inline inside a <script> block (user-controlled names/emails). */
