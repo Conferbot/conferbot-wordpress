@@ -132,7 +132,7 @@ class Conferbot_Admin
         <?php
         printf(
             /* translators: %s: link to the Conferbot dashboard */
-            esc_html__('Find it in your %s: open your bot, click "Share", then "Copy Bot ID". Pasting the whole code snippet also works - we will find the ID for you.', 'conferbot'),
+            esc_html__('Find it in your %s: open your bot, click "Share", then "Embed into your website" and copy the code - we will find the ID in it. The ID is also in the address bar: .../chatbot/<ID>/embed.', 'conferbot'),
             '<a href="https://app.conferbot.com" target="_blank" rel="noopener">' . esc_html__('Conferbot dashboard', 'conferbot') . '</a>'
         );
         ?>
