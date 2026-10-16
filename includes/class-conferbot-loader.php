@@ -105,7 +105,8 @@ HTML;
     public static function gather_context()
     {
         $site = array(
-            'name' => get_bloginfo('name'),
+            // Stored HTML-escaped; decoded here, the JSON_HEX flags keep the script safe.
+            'name' => wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES),
             'url' => home_url('/'),
             'language' => get_locale(),
             'currency' => function_exists('get_woocommerce_currency') ? get_woocommerce_currency() : '',
