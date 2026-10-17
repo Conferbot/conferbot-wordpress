@@ -1,6 +1,6 @@
 # WordPress.org plugin directory: submission kit
 
-Everything needed to list **Conferbot - AI Chatbot, Live Chat & Customer Support** 1.1.0 in the WordPress.org plugin directory. Checked against the official docs on 2026-10-17.
+Everything needed to list **Conferbot - AI Chatbot, Live Chat & Customer Support** 1.1.1 in the WordPress.org plugin directory. Checked against the official docs on 2026-10-17.
 
 ## 1. Where to submit
 
@@ -18,12 +18,12 @@ Everything needed to list **Conferbot - AI Chatbot, Live Chat & Customer Support
 | Requirement | Status |
 | --- | --- |
 | GPL-compatible licence | OK. `LICENSE` is GPL v2, and the headers say `GPLv2 or later`. |
-| Plugin Check passes with no errors (it runs automatically on upload, and errors block the submission) | Run the [Plugin Check](https://wordpress.org/plugins/plugin-check/) plugin on a test site first. Expect it to flag the issue in the next row. |
-| No hard-coded `<script>`/`<style>`: use `wp_enqueue_*()` | **Blocker, #9.** The front-end loader is echoed in `wp_head`, and the settings page prints inline `<style>` and `<script>`. |
+| Plugin Check passes with no errors (it runs automatically on upload, and errors block the submission) | Run the [Plugin Check](https://wordpress.org/plugins/plugin-check/) plugin on a test site first, on the 1.1.1 zip. |
+| No hard-coded `<script>`/`<style>`: use `wp_enqueue_*()` | OK since 1.1.1 (#9). The loader is `wp_enqueue_script` (same URL, in the head) plus `wp_add_inline_script(..., 'before')` for the boot call, with `async` and `charset` added by a `script_loader_tag` filter. The settings page's CSS and JS are files under `assets/`, enqueued on its own page only. A unit test fails if a `<script>`/`<style>` tag or `style=""` attribute comes back into the PHP. |
 | Third-party services documented in readme: what is sent, when, with links to the service's terms and privacy policy | Done in this kit: `readme.txt` now has `== External services ==`. |
 | No contact with external servers without consent (guideline 7) | OK. Nothing loads until the admin enters a bot ID and turns the chat on. |
 | Service JS may load remotely; any other JS must be bundled (guideline 8) | OK. Only the Conferbot widget (the service itself) loads from `cdn.conferbot.com`. |
-| Readme headers: short description of 150 characters or fewer, no more than 5 tags, `Tested up to` set to a released major, `Stable tag` matching the version | OK: 140 characters, 5 tags, `Tested up to: 7.1` (7.1.3 is the current release), `Stable tag: 1.1.0`, `Requires PHP: 7.2`, `Requires at least: 5.8`. |
+| Readme headers: short description of 150 characters or fewer, no more than 5 tags, `Tested up to` set to a released major, `Stable tag` matching the version | OK: 140 characters, 5 tags, `Tested up to: 7.1` (7.1.3 is the current release), `Stable tag: 1.1.1`, `Requires PHP: 7.2`, `Requires at least: 5.8`. |
 | No trademark as the first word of the name or slug (guideline 17) | OK. The name starts with "Conferbot", and "WordPress"/"WooCommerce" appear only descriptively. |
 | Slug | The directory builds the slug from `Plugin Name:`, which would give `conferbot-ai-chatbot-live-chat-customer-support`. The text domain is `conferbot`, and Plugin Check flags a mismatch. **Ask for the slug `conferbot`** (free as of today) when you submit, in the form's notes or in a reply to the review email before approval. A slug can never be changed after approval. |
 
@@ -31,9 +31,8 @@ Review time: the official target is about 5 business days (the handbook says up 
 
 ## 3. Blockers
 
-1. **#9: print scripts and styles through the enqueue API.** Fix it and release 1.1.1 before submitting. Otherwise the first review comes back with a "use wp_enqueue" request, and every round trip costs days.
-2. The `conferbot` WordPress.org username (or a change to `Contributors:`) and 2FA, both done by the owner.
-3. None on fees, tax or legal: the plugin is free, and the directory takes no payment.
+1. The `conferbot` WordPress.org username (or a change to `Contributors:`) and 2FA, both done by the owner.
+2. None on fees, tax or legal: the plugin is free, and the directory takes no payment.
 
 ## 4. Listing copy (ready to paste)
 
@@ -47,7 +46,7 @@ On WordPress.org the listing *is* `readme.txt`: name, short description, descrip
 - **Support:** the WordPress.org support forum for the plugin (created automatically), plus `support@conferbot.com`, the address already used in the plugin and on conferbot.com/contact.
 - **Privacy policy:** https://www.conferbot.com/privacy-policy (HTTP 200)
 - **Terms:** https://www.conferbot.com/terms-of-service (HTTP 200)
-- **Plugin URI** in `conferbot.php` is `https://conferbot.com/integrations/wordpress`, which **returns 404**. The live page is https://www.conferbot.com/chatbot/wordpress. Point the header there in the 1.1.1 release (#9) or publish the integrations page. A dead Plugin URI is not a blocker, but reviewers notice it.
+- **Plugin URI** in `conferbot.php`: https://www.conferbot.com/chatbot/wordpress (HTTP 200, the canonical WordPress page) since 1.1.1. The old `https://conferbot.com/integrations/wordpress` returns 404.
 
 ### Data and GDPR statement
 
@@ -93,20 +92,20 @@ unzip -q /path/to/conferbot.zip -d /tmp/cb && cp -R /tmp/cb/conferbot/. trunk/  
 cp /path/to/conferbot-wordpress/docs/marketplace/assets/*.png assets/
 svn add --force trunk assets
 svn propset svn:mime-type image/png assets/*.png
-svn cp trunk tags/1.1.0                                                            # must match Stable tag
-svn ci -m "Conferbot 1.1.0" --username <your wp.org username>                      # SVN password from your profile
+svn cp trunk tags/1.1.1                                                            # must match Stable tag
+svn ci -m "Conferbot 1.1.1" --username <your wp.org username>                      # SVN password from your profile
 ```
 
 ```
 conferbot-svn/
 ├── assets/          icon-128x128.png  icon-256x256.png  banner-772x250.png  banner-1544x500.png  screenshot-1..3.png
-├── tags/1.1.0/      copy of trunk at the release
-└── trunk/           conferbot.php  readme.txt  admin/  includes/  assets/logo.png  uninstall.php  LICENSE
+├── tags/1.1.1/      copy of trunk at the release
+└── trunk/           conferbot.php  readme.txt  admin/  includes/  assets/ (logo.png, css/, js/)  uninstall.php  LICENSE
 ```
 
 ## 7. Owner checklist
 
-- [ ] Fix #9 (enqueue) and the Plugin URI, then release 1.1.1 with matching `Version:`, `CONFERBOT_VERSION` and `Stable tag:`.
+- [x] Fix #9 (enqueue) and the Plugin URI, then release 1.1.1 with matching `Version:`, `CONFERBOT_VERSION` and `Stable tag:`.
 - [ ] Create the WordPress.org account (username `conferbot`, or update `Contributors:`) and turn on 2FA.
 - [ ] Run the Plugin Check plugin on the release zip and get zero errors.
 - [ ] Upload the zip at https://wordpress.org/plugins/developers/add/, ask for the slug `conferbot`, and accept the guidelines checkbox.
