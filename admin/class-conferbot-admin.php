@@ -10,6 +10,22 @@ if (!defined('ABSPATH') && !defined('CONFERBOT_TEST_SUITE')) {
 
 class Conferbot_Admin
 {
+    /** The settings page's hook suffix, from add_options_page(). */
+    public static $page_hook = '';
+
+    /**
+     * admin_enqueue_scripts: the settings page's stylesheet and script, on
+     * that page only (assets/css/conferbot-admin.css, assets/js/conferbot-admin.js).
+     */
+    public static function enqueue_assets($hook_suffix)
+    {
+        if (self::$page_hook === '' || $hook_suffix !== self::$page_hook) {
+            return;
+        }
+        wp_enqueue_style('conferbot-admin', CONFERBOT_PLUGIN_URL . 'assets/css/conferbot-admin.css', array(), CONFERBOT_VERSION);
+        wp_enqueue_script('conferbot-admin', CONFERBOT_PLUGIN_URL . 'assets/js/conferbot-admin.js', array(), CONFERBOT_VERSION, true);
+    }
+
     public static function handle_save()
     {
         if (!current_user_can('manage_options')) {
@@ -71,37 +87,9 @@ class Conferbot_Admin
             'other' => __('All other pages', 'conferbot'),
         );
         ?>
-<style>
-  .cb-panel { max-width: 720px; margin: 24px 0; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,.08); padding: 32px 36px; font-size: 15px; }
-  .cb-panel h1 { display: flex; align-items: center; gap: 10px; font-size: 24px; margin: 0 0 6px; padding: 0; }
-  .cb-sub { color: #6b7280; margin-bottom: 24px; }
-  .cb-status { border-radius: 10px; padding: 14px 18px; margin-bottom: 26px; }
-  .cb-status.ok { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
-  .cb-status.warn { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
-  .cb-status.err { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
-  .cb-step { margin-bottom: 26px; }
-  .cb-step-label { font-weight: 700; font-size: 17px; margin-bottom: 6px; display: block; }
-  .cb-step-help { color: #6b7280; margin-bottom: 10px; }
-  .cb-input { width: 100%; font-size: 18px; padding: 14px 16px; border: 2px solid #d1d5db; border-radius: 10px; }
-  .cb-input:focus { border-color: #2563eb; outline: none; box-shadow: none; }
-  .cb-switch { position: relative; display: inline-block; width: 64px; height: 34px; vertical-align: middle; }
-  .cb-switch input { opacity: 0; width: 0; height: 0; }
-  .cb-slider { position: absolute; cursor: pointer; inset: 0; background: #d1d5db; border-radius: 34px; transition: .2s; }
-  .cb-slider:before { content: ""; position: absolute; height: 26px; width: 26px; left: 4px; bottom: 4px; background: #fff; border-radius: 50%; transition: .2s; }
-  .cb-switch input:checked + .cb-slider { background: #16a34a; }
-  .cb-switch input:checked + .cb-slider:before { transform: translateX(30px); }
-  .cb-switch-text { margin-left: 12px; vertical-align: middle; font-size: 16px; }
-  .cb-save { display: block; width: 100%; margin-top: 8px; background: #2563eb !important; color: #fff !important; border: none !important; border-radius: 10px !important; padding: 16px !important; font-size: 19px !important; font-weight: 700; cursor: pointer; }
-  .cb-demo { margin-top: 8px; color: #6b7280; font-size: 14px; }
-  .cb-advanced { margin-top: 28px; border-top: 1px solid #e5e7eb; padding-top: 18px; }
-  .cb-advanced summary { cursor: pointer; color: #6b7280; font-weight: 600; font-size: 14px; }
-  .cb-pages label { display: inline-flex; align-items: center; gap: 6px; margin: 8px 16px 0 0; }
-  .cb-select { margin-top: 10px; }
-  .cb-help { margin-top: 18px; text-align: center; color: #6b7280; }
-</style>
 <div class="wrap">
 <div class="cb-panel">
-  <h1><img src="<?php echo esc_url(CONFERBOT_PLUGIN_URL . 'assets/logo.png'); ?>" alt="Conferbot" style="width:44px;height:44px"> <?php esc_html_e('Conferbot Live Chat', 'conferbot'); ?></h1>
+  <h1><img src="<?php echo esc_url(CONFERBOT_PLUGIN_URL . 'assets/logo.png'); ?>" alt="Conferbot" class="cb-logo"> <?php esc_html_e('Conferbot Live Chat', 'conferbot'); ?></h1>
   <p class="cb-sub"><?php esc_html_e('Add a chat assistant to your site in under a minute. Only one thing to paste!', 'conferbot'); ?></p>
 
   <?php if ($error === 'no_id_found') : ?>
@@ -172,28 +160,18 @@ class Conferbot_Admin
         <?php endforeach; ?>
       </div>
       <p><strong><?php esc_html_e('Identity verification secret', 'conferbot'); ?></strong> <span class="cb-step-help"><?php esc_html_e('(optional - from Conferbot workspace settings > Security > Identity verification; lets Conferbot trust your logged-in customers\' names and emails)', 'conferbot'); ?></span></p>
-      <input class="cb-input" style="font-size:14px;padding:10px 12px" type="password" name="identity_secret" autocomplete="new-password"
+      <input class="cb-input cb-input-small" type="password" name="identity_secret" autocomplete="new-password"
         placeholder="<?php echo esc_attr(!empty($s['identity_secret']) ? __('Saved - paste a new one to replace it', 'conferbot') : __('Paste your secret', 'conferbot')); ?>" value="">
       <?php if (!empty($s['identity_secret'])) : ?>
         <label class="cb-step-help"><input type="checkbox" name="identity_secret_clear" value="1"> <?php esc_html_e('Remove the saved secret', 'conferbot'); ?></label>
       <?php endif; ?>
       <p><strong><?php esc_html_e('Widget script URL', 'conferbot'); ?></strong> <span class="cb-step-help"><?php esc_html_e('(leave as is unless Conferbot support says otherwise)', 'conferbot'); ?></span></p>
-      <input class="cb-input" style="font-size:14px;padding:10px 12px" type="text" name="script_url" value="<?php echo esc_attr($s['script_url']); ?>">
+      <input class="cb-input cb-input-small" type="text" name="script_url" value="<?php echo esc_attr($s['script_url']); ?>">
     </details>
   </form>
   <p class="cb-help"><?php esc_html_e('Need help? Write to', 'conferbot'); ?> <a href="mailto:support@conferbot.com">support@conferbot.com</a></p>
 </div>
 </div>
-<script>
-  document.getElementById('cb-use-demo').addEventListener('click', function (e) {
-    e.preventDefault();
-    var input = document.getElementById('cb-id');
-    input.value = this.getAttribute('data-demo-id');
-    var toggle = document.querySelector('.cb-switch input');
-    if (toggle) { toggle.checked = true; }
-    input.focus();
-  });
-</script>
         <?php
     }
 }
