@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Conferbot - AI Chatbot, Live Chat & Customer Support
- * Plugin URI: https://conferbot.com/integrations/wordpress
+ * Plugin URI: https://www.conferbot.com/chatbot/wordpress
  * Description: Turn visitors into customers with an AI chatbot and live chat widget. Automate 24/7 support, capture leads and hand over to human agents - set up in under a minute, WooCommerce aware.
  * Version: 1.1.0
  * Requires at least: 5.8
