@@ -56,11 +56,22 @@ Yes, with WooCommerce. The thank-you page reports each order once (value, curren
 = What data does the plugin store? =
 Only its own settings (bot ID, display options and, if you add one, the identity verification secret). Conversations happen between the visitor's browser and Conferbot's servers; see the Conferbot privacy policy.
 
+== External services ==
+
+This plugin connects your site to Conferbot (https://www.conferbot.com), a hosted chatbot and live chat service. Without it the plugin does nothing.
+
+* **Widget script:** when the chat is switched on, each front-end page where it is visible loads `https://cdn.conferbot.com/dist/v1/widget.min.js` in the visitor's browser. The widget then connects to Conferbot's servers to run the conversation.
+* **What is sent, and when:** with each page view where the chat is shown: your Chatbot ID, the plugin version, and your site's name, address, language and (with WooCommerce) store currency. For logged-in users only: their user ID, display name and email, and, if you added an identity verification secret, an HMAC signature of the user ID (the secret itself never leaves your server). With WooCommerce: the cart total and item count, add-to-cart events, and on the order-received page the order's total, currency and order number (once per order). Anything a visitor types or uploads in the chat is sent to Conferbot as part of the conversation.
+* **Nothing is sent** while the chat is switched off, has no valid Chatbot ID, or is hidden on that page type.
+
+Conferbot's terms of service: https://www.conferbot.com/terms-of-service
+Conferbot's privacy policy: https://www.conferbot.com/privacy-policy
+
 == Screenshots ==
 
-1. Two-step settings page: paste the bot ID, flip the switch.
-2. The chat bubble live on a storefront.
-3. A conversation with the AI assistant.
+1. The two-step settings page (Settings > Conferbot): paste the Chatbot ID, turn the chat on, save.
+2. The chat open on the site, showing the widget's home screen.
+3. A conversation with the bot on the site.
 
 == Changelog ==
 
