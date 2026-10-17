@@ -71,7 +71,7 @@ The look of the chat (colours, launcher, greeting, languages, flows, AI agent, l
 | Symptom | Cause and fix |
 |---|---|
 | No bubble, and `conferbot-js` is not in the page source | The switch is off, no valid ID is saved, or the page type is unticked under **Show the chat on these pages**. Also clear any page cache (WP Rocket, W3 Total Cache, LiteSpeed, Cloudflare APO) after saving. |
-| `conferbot-js` is in the source but no bubble | A script blocker, a Content Security Policy without `cdn.conferbot.com` and `wdt.conferbot.com`, or a theme that strips `wp_head`. Check the browser console. Optimisation plugins that delay or combine JavaScript can also hold it back; exclude `cdn.conferbot.com`. |
+| `conferbot-js` is in the source but no bubble | A script blocker, a Content Security Policy without `cdn.conferbot.com` and `wdt.conferbot.com`, or a theme that never calls `wp_head()` (enqueued head scripts print there). Check the browser console. Optimisation plugins that delay or combine JavaScript can also hold it back; exclude `cdn.conferbot.com`. |
 | "We could not find a Chatbot ID in what you pasted" | What you pasted has no 24-character code. Copy it again from Share > Embed into your website. |
 | The bubble shows a different bot | Another copy of the embed code is still in the theme or a header-scripts plugin. Remove it: the plugin skips loading if a `conferbot-js` script is already on the page. |
 | Logged-in customers show as unverified | Paste the identity verification secret under Advanced settings, and make sure it matches the one in your Conferbot workspace. |
@@ -86,15 +86,13 @@ Still stuck? Write to support@conferbot.com.
 
 ## How it works
 
-The plugin hooks `wp_head` and injects the standard Conferbot loader. The widget script loads without blocking the page, and `ConferbotWidget` is called once it has loaded:
+The plugin queues the widget through the WordPress script API (`wp_enqueue_scripts`), so it prints in the head, only when the chat is on and visible on that page. The script tag (`id="conferbot-js"`) is loaded `async` with `charset="UTF-8"` (added by a `script_loader_tag` filter, so this also works before WordPress 6.3). A small inline script, attached with `wp_add_inline_script(..., 'before')`, calls `ConferbotWidget` once the widget has loaded:
 
 ```html
-<script>
-  (function (d, s, id) {
-    var js = d.createElement(s); js.async = true; js.id = id;
-    js.src = "https://cdn.conferbot.com/dist/v1/widget.min.js";
-    d.head.appendChild(js);
-    js.onload = function () {
+<script id="conferbot-js-before">
+  (function (d, id) {
+    d.addEventListener("load", function (e) {        // fires once the widget tag below has loaded
+      if (e.target.id !== id) return;
       window.ConferbotWidget("<CHATBOT_ID>", "live_chat", {
         user:       { id: "wp-7", name, email, hash },   // logged-in WP user, if any
         customData: { platform: "wordpress", siteName, siteUrl, siteLanguage,
@@ -102,10 +100,13 @@ The plugin hooks `wp_head` and injects the standard Conferbot loader. The widget
       });
       // On the WooCommerce thank-you page, once per order:
       window.ConferbotWidget.track("purchase", { value, currency, order_id });
-    };
-  })(document, "script", "conferbot-js");
+    }, true);
+  })(document, "conferbot-js");
 </script>
+<script async charset="UTF-8" src="https://cdn.conferbot.com/dist/v1/widget.min.js" id="conferbot-js"></script>
 ```
+
+The settings page's CSS and JS are files (`assets/css/conferbot-admin.css`, `assets/js/conferbot-admin.js`), enqueued on Settings > Conferbot only.
 
 The only credential is the **Chatbot ID**. Paste the bare ID, the full embed code from the dashboard (your bot > Share > Embed), or a dashboard URL, and the ID is extracted automatically. A one-click **demo bot** works without an account.
 
@@ -128,8 +129,10 @@ includes/
 ├── class-conferbot-settings.php          # option shape, defaults, sanitize, persistence
 ├── class-conferbot-visibility.php        # conditional tags -> page type -> visible?
 ├── class-conferbot-context.php           # ConferbotWidget() options + script-safe JSON
-└── class-conferbot-loader.php            # renders the loader; gathers live WP/Woo context
+└── class-conferbot-loader.php            # enqueues the loader + boot script; gathers live WP/Woo context
 admin/class-conferbot-admin.php           # two-step settings page (nonce + capability checked)
+assets/css/conferbot-admin.css            # settings page styles (that page only)
+assets/js/conferbot-admin.js              # settings page "Try our demo bot" link (that page only)
 uninstall.php                             # removes plugin options on delete
 readme.txt                                # WordPress.org listing copy
 tests/                                    # PHPUnit suite (WP functions stubbed)
@@ -137,14 +140,14 @@ tests/                                    # PHPUnit suite (WP functions stubbed)
 
 ## Tests
 
-26 tests, no WordPress install needed:
+30 tests, no WordPress install needed:
 
 ```bash
 docker run --rm -v "$PWD":/mod -v /path/to/phpunit-10.phar:/phpunit.phar:ro \
   -w /mod php:8.2-cli php /phpunit.phar
 ```
 
-Covered: bot ID extraction (bare/snippet/URL/garbage), settings sanitization (invalid embed types, `javascript:` script URLs, enable-without-ID refusal, the write-only identity secret), WooCommerce-aware page-type resolution with priority rules, per-page visibility, guest/user/cart context building, the identity hash, purchase tracking once per order, and script-injection safety of the inlined JSON.
+Covered: bot ID extraction (bare/snippet/URL/garbage), settings sanitization (invalid embed types, `javascript:` script URLs, enable-without-ID refusal, the write-only identity secret), WooCommerce-aware page-type resolution with priority rules, per-page visibility, guest/user/cart context building, the identity hash, purchase tracking once per order, script-injection safety of the inlined JSON, the loader queued through `wp_enqueue_script`/`wp_add_inline_script` with the same URL and attributes, the settings assets queued on their own page only, and no hard-coded `<script>`/`<style>` in the PHP.
 
 Verified end to end in a dockerized WordPress 7.1 with WooCommerce: activation, loader render with correct context, logged-in identity (`wp-1`), per-page gating on/off, and the real CDN widget mounting and chatting. Re-checked on WordPress 7.1.3 (October 2026): upload and activate, save with nonce, refusal for non-admins, the on/off switch, script-safe site names, and the widget opening and chatting (the GIF above).
 
