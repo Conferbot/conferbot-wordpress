@@ -6,7 +6,7 @@ Embeds the [Conferbot](https://conferbot.com) AI chat widget on a WordPress site
 
 Upload the zip, activate it, paste the Chatbot ID under Settings > Conferbot, save, and the chat is live (recorded on WordPress 7.1.3):
 
-![Conferbot on WordPress: upload the plugin, activate, paste the bot ID, save, open the site and chat](docs/media/install.gif)
+[![Conferbot on WordPress: upload the plugin, activate, paste the bot ID, save, open the site and chat](docs/media/install.gif)](https://github.com/Conferbot/conferbot-wordpress/releases/download/v1.1.0/install.mp4)
 
 ## Install
 
@@ -23,7 +23,7 @@ The plugin is not in the WordPress.org directory yet. Once it is: **Plugins > Ad
 
 ### From a zip (manual)
 
-1. Get the zip: download `conferbot.zip` from this repository's Releases page when a release is published, or build it from a checkout with `git archive --format=zip --prefix=conferbot/ -o conferbot.zip HEAD`. The zip must contain a single `conferbot/` folder with `conferbot.php` inside it.
+1. Get the zip: download `conferbot.zip` from the [latest release](https://github.com/Conferbot/conferbot-wordpress/releases/latest), or build it from a checkout with `git archive --format=zip --prefix=conferbot/ -o conferbot.zip HEAD`. The zip must contain a single `conferbot/` folder with `conferbot.php` inside it.
 2. In WordPress go to **Plugins > Add New Plugin > Upload Plugin**, choose `conferbot.zip`, and click **Install Now**.
 3. Click **Activate Plugin**.
 
