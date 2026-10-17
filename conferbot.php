@@ -31,7 +31,7 @@ require_once CONFERBOT_PLUGIN_DIR . 'admin/class-conferbot-admin.php';
 // ---- Admin ------------------------------------------------------------------
 
 add_action('admin_menu', function () {
-    add_options_page(
+    Conferbot_Admin::$page_hook = add_options_page(
         __('Conferbot Live Chat', 'conferbot'),
         __('Conferbot', 'conferbot'),
         'manage_options',
@@ -39,6 +39,9 @@ add_action('admin_menu', function () {
         array('Conferbot_Admin', 'render_page')
     );
 });
+
+// The settings page's CSS and JS, on that page only.
+add_action('admin_enqueue_scripts', array('Conferbot_Admin', 'enqueue_assets'));
 
 add_action('admin_post_conferbot_save', array('Conferbot_Admin', 'handle_save'));
 
@@ -50,7 +53,7 @@ add_filter('plugin_action_links_' . plugin_basename(__FILE__), function ($links)
 
 // ---- Front office --------------------------------------------------------------
 
-add_action('wp_head', function () {
+add_action('wp_enqueue_scripts', function () {
     $settings = Conferbot_Settings::get();
 
     if (empty($settings['enabled']) || !Conferbot_Bot_Id::is_valid($settings['bot_id'])) {
@@ -71,5 +74,7 @@ add_action('wp_head', function () {
         return;
     }
 
-    echo Conferbot_Loader::render($settings, Conferbot_Loader::gather_context(), Conferbot_Loader::gather_events()); // phpcs:ignore WordPress.Security.EscapeOutput -- script tag built from validated/JSON_HEX-encoded values
+    Conferbot_Loader::enqueue($settings, Conferbot_Loader::gather_context(), Conferbot_Loader::gather_events());
 });
+
+add_filter('script_loader_tag', array('Conferbot_Loader', 'script_tag'), 10, 2);
