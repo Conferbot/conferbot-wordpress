@@ -67,6 +67,8 @@ Only its own settings (bot ID, display options and, if you add one, the identity
 = 1.1.0 =
 * Identity verification: logged-in customers are signed with your workspace secret.
 * WooCommerce sales tracking: orders and add-to-cart are reported to Conferbot.
+* The site name is sent to the bot as text, not HTML-escaped (an ampersand no longer arrives as &amp;).
+* The bot ID help on the settings page points to Share > Embed into your website.
 
 = 1.0.0 =
 * Initial release: widget embed with visitor/WooCommerce context, two-step settings page, demo bot, per-page visibility.
