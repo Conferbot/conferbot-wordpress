@@ -1,7 +1,7 @@
 <?php
 /**
- * Renders the widget loader <script> for wp_head and gathers the live
- * WordPress/WooCommerce context that feeds Conferbot_Context::build().
+ * Enqueues the widget loader through the WordPress script API and gathers
+ * the live WordPress/WooCommerce context that feeds Conferbot_Context::build().
  */
 
 if (!defined('ABSPATH') && !defined('CONFERBOT_TEST_SUITE')) {
@@ -10,36 +10,67 @@ if (!defined('ABSPATH') && !defined('CONFERBOT_TEST_SUITE')) {
 
 class Conferbot_Loader
 {
+    /** Script handle. WordPress prints the tag with id="conferbot-js", the id the loader has always used. */
+    const HANDLE = 'conferbot';
+
     /**
-     * Pure renderer: settings + prebuilt options -> HTML string.
+     * wp_enqueue_scripts: queue the widget script (same URL, in the head)
+     * and, just before it, the inline boot code that calls
+     * window.ConferbotWidget() once the script has loaded.
      */
-    public static function render(array $settings, array $options, array $events = array())
+    public static function enqueue(array $settings, array $options, array $events = array())
     {
-        $script_url = esc_url($settings['script_url']);
+        // Version null: the URL is printed exactly as configured, without ?ver=.
+        wp_enqueue_script(self::HANDLE, $settings['script_url'], array(), null, false);
+        wp_add_inline_script(self::HANDLE, self::boot_script($settings, $options, $events), 'before');
+    }
+
+    /**
+     * script_loader_tag filter: the widget tag keeps the attributes the
+     * loader always set: async (on every WordPress version, including those
+     * before 6.3 that have no loading strategies) and charset UTF-8.
+     */
+    public static function script_tag($tag, $handle)
+    {
+        if ($handle !== self::HANDLE || !is_string($tag)) {
+            return $tag;
+        }
+        return preg_replace_callback('/<script\b(?=[^>]*\ssrc=)[^>]*>/i', function ($m) {
+            $open = $m[0];
+            $add = '';
+            if (!preg_match('/\sasync(\s|=|>)/i', $open)) {
+                $add .= ' async';
+            }
+            if (!preg_match('/\scharset=/i', $open)) {
+                $add .= ' charset="UTF-8"';
+            }
+            return $add === '' ? $open : preg_replace('/^<script\b/i', '<script' . $add, $open);
+        }, $tag, 1);
+    }
+
+    /**
+     * Pure: settings + prebuilt options -> the inline boot JavaScript (no script
+     * tags of its own; WordPress prints them). It runs before the async widget
+     * tag and boots the widget when that tag's load event fires.
+     */
+    public static function boot_script(array $settings, array $options, array $events = array())
+    {
         $bot_id = esc_js($settings['bot_id']);
         $embed_type = esc_js($settings['embed_type']);
         $json = Conferbot_Context::to_json($options);
         $tracks = self::track_calls($events);
+        $id = esc_js(self::HANDLE . '-js');
 
-        return <<<HTML
-<!-- Conferbot Live Chat -->
-<script type="text/javascript">
-  (function (d, s, id) {
-    var js, el = d.getElementsByTagName(s)[0];
-    if (d.getElementById(id)) return;
-    js = d.createElement(s);
-    js.async = true;
-    js.src = '{$script_url}';
-    js.id = id;
-    js.charset = 'UTF-8';
-    if (el && el.parentNode) { el.parentNode.insertBefore(js, el); } else { d.head.appendChild(js); }
-    js.onload = function () {
-      window.ConferbotWidget('{$bot_id}', '{$embed_type}', {$json});{$tracks}
-    };
-  })(document, 'script', 'conferbot-js');
-</script>
-
-HTML;
+        return <<<JS
+(function (d, id) {
+  var booted = false;
+  d.addEventListener('load', function (e) {
+    if (booted || !e.target || e.target.id !== id) return;
+    booted = true;
+    window.ConferbotWidget('{$bot_id}', '{$embed_type}', {$json});{$tracks}
+  }, true);
+})(document, '{$id}');
+JS;
     }
 
     /**
