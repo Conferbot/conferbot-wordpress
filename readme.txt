@@ -4,7 +4,7 @@ Tags: chatbot, live chat, ai chatbot, customer support, chat widget
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.2
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -74,6 +74,11 @@ Conferbot's privacy policy: https://www.conferbot.com/privacy-policy
 3. A conversation with the bot on the site.
 
 == Changelog ==
+
+= 1.1.1 =
+* The widget loader is printed through the WordPress script API (wp_enqueue_script with an inline boot script) instead of a hard-coded script tag. Same script URL, async loading, on/off switch and logged-in customer details.
+* The settings page's CSS and JavaScript are separate files, loaded on that page only.
+* Plugin URI points to https://www.conferbot.com/chatbot/wordpress.
 
 = 1.1.0 =
 * Identity verification: logged-in customers are signed with your workspace secret.
